@@ -53,13 +53,20 @@ class Newt(object):
 
     def get_usage(self, username):
         """
-        Returns allocation and usage for the given user
+        Returns allocation and usage for the given user using NEWT IRIS API
         :param username: string username 
         :return: json containing allocation and usage information for a given user 
         """
         self._login()
-        user_url = self.newt_base_url + "account/usage/user/" + username
-        r = self.session.get(user_url)
+        iris_url = "{}/{}".format(self.newt_base_url, 'account/iris')
+        query = ("accounts(username: \\\"{}\\\")"
+        "{{projectId, repoName, repoType, currentAlloc, usedAlloc, users "
+        "{{uid, name, firstname, lastname, middlename, userAlloc, "
+        "userAllocPct, usedAlloc }} "
+        "}}").format(username)
+        r = self.session.post(
+            url=iris_url,
+            data={"query": query })
         r.raise_for_status()
         return r.json()
 
