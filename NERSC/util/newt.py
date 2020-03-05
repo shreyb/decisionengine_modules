@@ -2,6 +2,7 @@
 Newt API interface
 """
 
+from copy import deepcopy
 import os
 import time
 import requests
@@ -59,16 +60,41 @@ class Newt(object):
         """
         self._login()
         iris_url = "{}/{}".format(self.newt_base_url, 'account/iris')
-        query = ("accounts(username: \\\"{}\\\")"
-        "{{projectId, repoName, repoType, currentAlloc, usedAlloc, users "
-        "{{uid, name, firstname, lastname, middlename, userAlloc, "
-        "userAllocPct, usedAlloc }} "
+        query = (
+        "accounts(username: \\\"{}\\\") {{ "
+        "   projectId, "
+        "   repoName, "
+        "   repoType, "
+        "   currentAlloc, "
+        "   usedAlloc, "
+        "   users {{ "
+        "       uid, "
+        "       name, "
+        "       firstname, "
+        "       lastname, "
+        "       middlename, "
+        "       userAlloc, "
+        "       userAllocPct, "
+        "       usedAlloc "
+        "   }} "
         "}}").format(username)
+        # Remove whitespace to make more readable 
+        query = query.replace(" ", "").replace(",", ", ") 
         r = self.session.post(
             url=iris_url,
-            data={"query": query })
+            data={"query": query})
         r.raise_for_status()
-        return r.json()
+        raw_json = r.json()
+
+        # Flatten json so it returns data that follows the old NEWT structure
+        final = {'items':[]}
+        for account in raw_json['data']['newt']['accounts']:
+            _item = {k:v for k, v in account.items() if k != 'users'}
+            for user in account['users']:
+                _item2 = deepcopy(_item)
+                _item2.update(user)
+                final['items'].append(_item2)
+        return final
 
     def get_status(self, system=None):
         """
