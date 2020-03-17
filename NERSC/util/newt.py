@@ -66,8 +66,8 @@ class Newt(object):
         query = (
             "accounts(username: \\\"{}\\\") {{ "
             "   projectId, "
-            "   rname: repoName, "
-            "   repo_type: repoType, "
+            "   repoName, "
+            "   repoType, "
             "   currentAlloc, "
             "   usedAlloc, "
             "   users {{ "
