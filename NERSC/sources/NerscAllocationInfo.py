@@ -43,8 +43,12 @@ class NerscAllocationInfo(Source.Source):
         # filter results based on constraints specified in newt_keys dictionary
         newt_keys = self.constraints.get("newt_keys", {})
         for key, values in newt_keys.items():
+            k = key
+            # Remap these two keys because they changed in the new NEWT IRIS API
+            if key == 'rname': k = 'repoName'
+            if key == 'repo_type': k = 'repoType'
             if values:
-                results = [x for x in results if x[key] in values]
+                results = filter(lambda x: x[k] in values, results)
         self.raw_results = results
 
     def raw_results_to_pandas_frame(self):
