@@ -38,8 +38,12 @@ class NerscAllocationInfo(Source.Source):
         results = []
         for username in self.constraints.get("usernames", []):
             values = self.newt.get_usage(username)
-            if values:
-                results.extend(values['items'])
+	    if values:
+                try:
+	            results.extend(values['items'])
+                except KeyError:
+                    # Empty return from get_usage, so just move on
+                    pass
         # filter results based on constraints specified in newt_keys dictionary
         newt_keys = self.constraints.get("newt_keys", {})
         for key, values in newt_keys.items():
