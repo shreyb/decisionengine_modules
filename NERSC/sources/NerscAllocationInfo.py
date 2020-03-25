@@ -52,7 +52,7 @@ class NerscAllocationInfo(Source.Source):
             if key == 'rname': k = 'repoName'
             if key == 'repo_type': k = 'repoType'
             if values:
-                results = filter(lambda x: x[k] in values, results)
+                results = [x for x in results if x[k] in values]
         self.raw_results = results
 
     def raw_results_to_pandas_frame(self):
