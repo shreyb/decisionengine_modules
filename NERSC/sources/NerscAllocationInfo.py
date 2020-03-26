@@ -48,7 +48,8 @@ class NerscAllocationInfo(Source.Source):
         newt_keys = self.constraints.get("newt_keys", {})
         for key, values in newt_keys.items():
             k = key
-            # Remap these two keys because they changed in the new NEWT IRIS API
+            # The below remapping is needed for backward compatibility with 
+            # existing config files
             if key == 'rname': k = 'repoName'
             if key == 'repo_type': k = 'repoType'
             if values:
