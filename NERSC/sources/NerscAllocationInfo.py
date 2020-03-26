@@ -48,7 +48,7 @@ class NerscAllocationInfo(Source.Source):
         newt_keys = self.constraints.get("newt_keys", {})
         for key, values in newt_keys.items():
             k = key
-            # The below remapping is needed for backward compatibility with 
+            # The below remapping is needed for backward compatibility with
             # existing config files
             if key == 'rname': k = 'repoName'
             if key == 'repo_type': k = 'repoType'
