@@ -6,6 +6,9 @@ from copy import deepcopy
 import os
 import time
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 
 """
 Newt base URL. When not specified in constructor this
@@ -33,7 +36,24 @@ class Newt(object):
         if not self.newt_base_url.endswith("/"):
             self.newt_base_url += "/"
         self.session = requests.Session()
+        self.retry_count = 5 # TODO
+        self.backoff_factor = 1 # TODO
         self.expiration_time = time.time()
+        self._add_retries_to_session()
+
+    def _add_retries_to_session(self):
+        """
+        Adds retries to requests Session for requests to NEWT URLs
+        :return: void
+        """
+        retry = Retry(
+            status=self.retry_count,
+            status_forcelist=[500,],
+            backoff_factor=self.backoff_factor
+            )
+        retry_adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount(self.newt_base_url, retry_adapter)
+
 
     def _login(self):
         """
@@ -46,8 +66,10 @@ class Newt(object):
             with open(self.password_file) as f:
                 postfields = "&".join([line[:-1].strip()
                                        for line in f.readlines()])
+
             r = self.session.post(login_url, data=postfields)
             r.raise_for_status()
+
             response_dict = r.json()
             if not response_dict.get("auth"):
                 raise RuntimeError(
