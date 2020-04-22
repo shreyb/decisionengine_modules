@@ -85,19 +85,7 @@ class NerscJobInfo(Source.Source):
         Acquire NERSC job info and return as pandas frame
         :rtype: :obj:`~pd.DataFrame`
         """
-        tries = 0
-        while True:
-            try:
-                return self._acquire()
-            except RuntimeError:
-                raise
-            except Exception as e:
-                if tries < self.max_retries:
-                    tries += 1
-                    time.sleep(self.retry_timeout)
-                    continue
-                else:
-                    raise RuntimeError(str(e))
+        return self._acquire()
 
 
 def module_config_template():
