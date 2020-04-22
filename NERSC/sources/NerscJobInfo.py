@@ -1,13 +1,12 @@
 """ Get job info from Nersc
 """
 import argparse
+import logging
 import pprint
 import pandas as pd
-import time
 
 from decisionengine.framework.modules import Source
 from decisionengine_modules.NERSC.util import newt
-import logging
 
 PRODUCES = ['Nersc_Job_Info']
 
@@ -38,10 +37,11 @@ class NerscJobInfo(Source.Source):
                              )
         self.logger = logging.getLogger()
 
-    def _acquire(self):
+    def acquire(self):
         """
-        Helper method that does heavy lifting.
-        Called from acquire
+        Method to be called from Task Manager.
+        redefines acquire from Source.py.
+        Acquire NERSC job info and return as pandas frame
         :return: `dict`
         """
         raw_results = []
@@ -77,15 +77,6 @@ class NerscJobInfo(Source.Source):
         Copied from Source.py
         """
         return PRODUCES
-
-    def acquire(self):
-        """
-        Method to be called from Task Manager.
-        redefines acquire from Source.py.
-        Acquire NERSC job info and return as pandas frame
-        :rtype: :obj:`~pd.DataFrame`
-        """
-        return self._acquire()
 
 
 def module_config_template():
