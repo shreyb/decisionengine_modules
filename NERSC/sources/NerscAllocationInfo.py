@@ -12,7 +12,6 @@ import logging
 
 PRODUCES = ['Nersc_Allocation_Info']
 
-
 _MAX_RETRIES = 10
 _RETRY_BACKOFF_FACTOR = 1
 
@@ -32,7 +31,6 @@ class NerscAllocationInfo(Source.Source):
 
         self.raw_results = None
         self.pandas_frame = None
-
         self.max_retries = config.get("max_retries", _MAX_RETRIES)
         self.retry_backoff_factor = config.get("retry_backoff_factor", _RETRY_BACKOFF_FACTOR)
         self.newt = newt.Newt(config.get('passwd_file'),

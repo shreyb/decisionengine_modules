@@ -69,7 +69,6 @@ class Newt(object):
 
             r = self.session.post(login_url, data=postfields)
             r.raise_for_status()
-
             response_dict = r.json()
             if not response_dict.get("auth"):
                 raise RuntimeError(
