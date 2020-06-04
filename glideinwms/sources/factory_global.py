@@ -1,11 +1,13 @@
 import argparse
+import logging
 import traceback
 import pprint
+
 import pandas
 
 from decisionengine.framework.modules import Source
-import logging
 from decisionengine_modules.htcondor import htcondor_query
+from decisionengine_modules.util.retry_function import retry_on_error
 
 
 PRODUCES = ['factoryglobal_manifests']
@@ -45,11 +47,7 @@ class FactoryGlobalManifests(Source.Source):
             classad_attrs = []
 
             try:
-                condor_status = htcondor_query.CondorStatus(
-                    subsystem_name=self.subsystem_name,
-                    pool_name=collector_host,
-                    group_attr=['Name'])
-
+                condor_status = self._condor_status_with_retry(collector_host)
                 condor_status.load(constraint, classad_attrs, self.condor_config)
                 df = pandas.DataFrame(condor_status.stored_data)
                 if not df.empty:
@@ -74,6 +72,17 @@ class FactoryGlobalManifests(Source.Source):
                                   (collector_host, traceback.format_exc()))
 
         return {PRODUCES[0]: dataframe}
+
+    #TODO configure retries!
+    @retry_on_error(nretries=9, retry_interval=2)
+    def _condor_status_with_retry(self, collector_host):
+        condor_status = htcondor_query.CondorStatus(
+            subsystem_name=self.subsystem_name,
+            pool_name=collector_host,
+            group_attr=['Name'])
+        return condor_status
+
+
 
 
 def module_config_template():
