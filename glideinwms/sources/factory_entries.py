@@ -1,11 +1,12 @@
 
 import argparse
+import logging
 import traceback
 import pprint
 import pandas
 
 from decisionengine.framework.modules import Source
-import logging
+from decisionengine_modules.util.retry_function import retry_wrapper
 from decisionengine_modules.htcondor import htcondor_query
 
 
@@ -31,6 +32,12 @@ class FactoryEntries(Source.Source):
             'Factory_Entries_GCE': ('gce',),
             'Factory_Entries_LCF': ('batch slurm',)
         }
+
+        # This combination of nretries and retry_interval adds up to just over
+        # 15 minutes
+        self.nretries = config.get('nretries', 9)
+        self.retry_interval = config.get('retry_interval', 2)
+
         self.subsystem_name = 'any'
         self.logger = logging.getLogger()
 
@@ -57,10 +64,20 @@ class FactoryEntries(Source.Source):
             classad_attrs = factory.get('classad_attrs')
 
             try:
-                condor_status = htcondor_query.CondorStatus(
-                    subsystem_name=self.subsystem_name,
-                    pool_name=collector_host,
-                    group_attr=['GLIDEIN_GridType'])
+                def __condor_status_with_collector():
+                    """Using a closure so that we can pass an argument-less
+                    function to retry_wrapper"""
+                    condor_status = htcondor_query.CondorStatus(
+                        subsystem_name=self.subsystem_name,
+                        pool_name=collector_host,
+                        group_attr=['GLIDEIN_GridType'])
+                    return condor_status
+
+                condor_status = retry_wrapper(
+                    __condor_status_with_collector,
+                    nretries=self.nretries,
+                    retry_interval=self.retry_interval
+                    )
 
                 condor_status.load(constraint, classad_attrs, self.condor_config)
                 df = pandas.DataFrame(condor_status.stored_data)
@@ -74,11 +91,19 @@ class FactoryEntries(Source.Source):
 
                     dataframe = pandas.concat([dataframe, df], ignore_index=True, sort=True)
             except htcondor_query.QueryError:
-                self.logger.warning('Query error fetching glidefactory classads from collector host(s) "%s"' % collector_host)
-                self.logger.error('Query error fetching glidefactory classads from collector host(s) "%s". Traceback: %s' % (collector_host, traceback.format_exc()))
+                warn_msg = 'Query error fetching glidefactory classads '\
+                           'from collector host(s) "{}"'.format(
+                               collector_host)
+                self.logger.warning(warn_msg)
+                self.logger.error(warn_msg + '. Traceback:'
+                                  '{}'.format(traceback.format_exc()))
             except Exception:
-                self.logger.warning('Unexpected error fetching glidefactory classads from collector host(s) "%s"' % collector_host)
-                self.logger.error('Unexpected error fetching glidefactory classads from collector host(s) "%s". Traceback: %s' % (collector_host, traceback.format_exc()))
+                warn_msg = 'Unexpected error fetching glidefactory '\
+                           'classads from collector host(s) '\
+                           '"{}"'.format(collector_host)
+                self.logger.warning(warn_msg)
+                self.logger.error(warn_msg + '. Traceback:'
+                                  '{}'.format(traceback.format_exc()))
 
         results = {}
         if not dataframe.empty:
@@ -107,6 +132,8 @@ def module_config_template():
                 'condor_config': '/path/to/condor_config',
                 'constraints': 'HTCondor classad query constraints',
                 'classad_attrs': '[]',
+                'nretries': 9,
+                'retry_interval': 2,
             }
         }
     }
