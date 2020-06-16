@@ -24,10 +24,10 @@ class FactoryGlobalManifests(Source.Source):
         self.condor_config = config.get('condor_config')
         self.factories = config.get('factories', [])
 
-        # This combination of nretries and retry_interval adds up to just over
-        # 15 minutes
-        self.nretries = config.get('nretries', 9)
-        self.retry_interval = config.get('retry_interval', 2)
+        # The combination of nretries=9 and retry_interval=2 adds up to just
+        # over 15 minutes
+        self.nretries = config.get('nretries', 0)
+        self.retry_interval = config.get('retry_interval', 0)
 
         self.subsystem_name = 'any'
         self.logger = logging.getLogger()
@@ -95,9 +95,6 @@ class FactoryGlobalManifests(Source.Source):
                                   '{}'.format(traceback.format_exc()))
 
         return {PRODUCES[0]: dataframe}
-
-
-
 
 
 def module_config_template():
