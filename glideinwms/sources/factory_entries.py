@@ -1,5 +1,6 @@
 
 import argparse
+from functools import partial
 import logging
 import traceback
 import pprint
@@ -33,7 +34,7 @@ class FactoryEntries(Source.Source):
             'Factory_Entries_LCF': ('batch slurm',)
         }
 
-        # The combination of nretries=9 and retry_interval=2 adds up to just
+        # The combination of nretries=10 and retry_interval=2 adds up to just
         # over 15 minutes
         self.nretries = config.get('nretries', 0)
         self.retry_interval = config.get('retry_interval', 0)
@@ -64,22 +65,17 @@ class FactoryEntries(Source.Source):
             classad_attrs = factory.get('classad_attrs')
 
             try:
-                def __condor_status_with_collector():
-                    """Using a closure so that we can pass an argument-less
-                    function to retry_wrapper"""
-                    condor_status = htcondor_query.CondorStatus(
-                        subsystem_name=self.subsystem_name,
-                        pool_name=collector_host,
-                        group_attr=['GLIDEIN_GridType'])
-                    return condor_status
+                condor_status = htcondor_query.CondorStatus(
+                    subsystem_name=self.subsystem_name,
+                    pool_name=collector_host,
+                    group_attr=['GLIDEIN_GridType'])
 
-                condor_status = retry_wrapper(
-                    __condor_status_with_collector,
+                retry_wrapper(
+                    partial(condor_status.load,
+                        *(constraint, classad_attrs, self.condor_config)),
                     nretries=self.nretries,
-                    retry_interval=self.retry_interval
-                    )
+                    retry_interval=self.retry_interval)
 
-                condor_status.load(constraint, classad_attrs, self.condor_config)
                 df = pandas.DataFrame(condor_status.stored_data)
                 if not df.empty:
                     (col_host, sec_cols) = htcondor_query.split_collector_host(collector_host)
@@ -128,12 +124,20 @@ def module_config_template():
             'module': 'decisionengine_modules.glideinwms.sources.factory_entries',
             'name': 'FactoryEntries',
             'parameters': {
-                'collector_host': 'factory_collector.com',
                 'condor_config': '/path/to/condor_config',
-                'constraints': 'HTCondor classad query constraints',
-                'classad_attrs': '[]',
-                'nretries': 9,
+                'nretries': 10,
                 'retry_interval': 2,
+                'factories': [
+                    {
+                        'collector_host': 'factory_collector.com',
+                        'classad_attrs': []
+                    },
+                    {
+                        'collector_host': 'factory_collector-2.com',
+                        'classad_attrs': [],
+                        'constraints': 'HTCondor classad query constraints',
+                    },
+                ],
             }
         }
     }

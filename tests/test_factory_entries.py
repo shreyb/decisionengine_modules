@@ -31,11 +31,11 @@ CONFIG_FACTORY_ENTRIES_BAD = {
 
 CONFIG_FACTORY_ENTRIES_BAD_WITH_TIMEOUT = {
     'condor_config': 'condor_config',
+    'nretries': 6,
+    'retry_interval': 2,
     'factories': [
         {
             'collector_host': 'dummy_collector.fnal.gov',
-            'nretries': 5,
-            'retry_interval': 2,
         },
     ]
 }
