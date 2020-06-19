@@ -138,7 +138,8 @@ def module_config_template():
                         'constraints': 'HTCondor classad query constraints',
                     },
                 ],
-            }
+            },
+            'schedule': 120,
         }
     }
     print('Entry in channel configuration')
