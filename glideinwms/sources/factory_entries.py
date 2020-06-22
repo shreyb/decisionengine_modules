@@ -86,20 +86,14 @@ class FactoryEntries(Source.Source):
                         df['CollectorHosts'] = [col_host] * len(df)
 
                     dataframe = pandas.concat([dataframe, df], ignore_index=True, sort=True)
-            except htcondor_query.QueryError:
-                warn_msg = 'Query error fetching glidefactory classads '\
-                           'from collector host(s) "{}"'.format(
-                               collector_host)
-                self.logger.warning(warn_msg)
-                self.logger.error(warn_msg + '. Traceback:'
-                                  '{}'.format(traceback.format_exc()))
+            except htcondor_query.QueryError as e:
+                self.logger.error('Failed to fetch glidefactory classads '
+                                    'from collector host(s) "{}": {}'.format(
+                                        collector_host, e))
             except Exception:
-                warn_msg = 'Unexpected error fetching glidefactory '\
-                           'classads from collector host(s) '\
-                           '"{}"'.format(collector_host)
-                self.logger.warning(warn_msg)
-                self.logger.error(warn_msg + '. Traceback:'
-                                  '{}'.format(traceback.format_exc()))
+                self.logger.exception('Unexpected error fetching glidefactory '
+                           'classads from collector host(s) '
+                           '"{}"'.format(collector_host))
 
         results = {}
         if not dataframe.empty:

@@ -77,18 +77,14 @@ class FactoryGlobalManifests(Source.Source):
 
                     dataframe = pandas.concat([dataframe, df], ignore_index=True, sort=True)
             except htcondor_query.QueryError:
-                warn_msg = 'Failed to get glidefactoryglobal classads from '\
-                           'collector host(s) "{}"'.format(collector_host)
-                self.logger.warning(warn_msg)
-                self.logger.error(warn_msg + '. Traceback:'
-                                  '{}'.format(traceback.format_exc()))
+                self.logger.error('Failed to get glidefactoryglobal classads '
+                                  'from collector host(s) "{}"'.format(
+                                   collector_host))
             except Exception:
-                warn_msg = 'Unexpected error fetching glidefactoryglobal '\
-                           'classads from collector host(s) '\
-                           '"{}"'.format(collector_host)
-                self.logger.warning(warn_msg)
-                self.logger.error(warn_msg + '. Traceback:'
-                                  '{}'.format(traceback.format_exc()))
+                self.logger.exception('Unexpected error fetching '
+                                      'glidefactoryglobal classads from '
+                                      'collector host(s) '"{}"''.format(
+                                          collector_host))
 
         return {PRODUCES[0]: dataframe}
 
