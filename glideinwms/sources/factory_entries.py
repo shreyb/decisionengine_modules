@@ -61,7 +61,8 @@ class FactoryEntries(Source.Source):
 
         for factory in self.factories:
             collector_host = factory.get('collector_host')
-            constraint = '(%s)&&(glideinmytype=="glidefactory")' % factory.get('constraint', True)
+            constraint = '(%s)&&(glideinmytype=="glidefactory")' % \
+                factory.get('constraint', True)
             classad_attrs = factory.get('classad_attrs')
 
             try:

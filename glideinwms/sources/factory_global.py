@@ -50,7 +50,7 @@ class FactoryGlobalManifests(Source.Source):
 
         for factory in self.factories:
             collector_host = factory.get('collector_host')
-            constraint = '(%s)&&(glideinmytype=="glidefactoryglobal")'%\
+            constraint = '(%s)&&(glideinmytype=="glidefactoryglobal")' % \
                     factory.get('constraint', True)
             classad_attrs = []
 
