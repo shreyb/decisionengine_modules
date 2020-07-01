@@ -138,12 +138,19 @@ def main():
         '--configinfo',
         action='store_true',
         help='prints config template along with produces and consumes info')
+    parser.add_argument(
+        '--acquire-with-config',
+        action='store',
+        help='Tries to contact NERSC with the provided config file')
     args = parser.parse_args()
 
     if args.configtemplate:
         module_config_template()
     elif args.configinfo:
         module_config_info()
+    elif args.acquire_with_config:
+        n = NerscAllocationInfo(args.acquire_with_config)
+        print(n.acquire())
     else:
         pass
 
