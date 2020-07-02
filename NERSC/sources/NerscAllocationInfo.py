@@ -143,7 +143,8 @@ def main():
         '--acquire-with-config',
         action='store',
         metavar='CONFIG_FILE',
-        help='Tries to contact NERSC with the provided config file')
+        help='Tries to contact NERSC with the provided config file and pulls '
+        'data according to config')
     args = parser.parse_args()
 
     if args.configtemplate:
