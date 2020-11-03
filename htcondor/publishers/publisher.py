@@ -38,7 +38,7 @@ class HTCondorManifests(Publisher.Publisher):
     def __str__(self):
         return '%s' % vars(self)
 
-    def __del__(self):
+    def shutdown(self):
         for collector_host in self.invalidate_ads_constraint:
             constraint = self.invalidate_ads_constraint[collector_host]
             if constraint:
