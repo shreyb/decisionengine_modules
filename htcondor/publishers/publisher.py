@@ -39,6 +39,7 @@ class HTCondorManifests(Publisher.Publisher):
         return '%s' % vars(self)
 
     def shutdown(self):
+        self.logger.info('Called HTCondorManifests.shutdown')
         for collector_host in self.invalidate_ads_constraint:
             constraint = self.invalidate_ads_constraint[collector_host]
             if constraint:
