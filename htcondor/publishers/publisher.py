@@ -10,7 +10,7 @@ from decisionengine.framework.modules import Publisher
 from decisionengine_modules.util.retry_function import retry_wrapper
 
 DEFAULT_UPDATE_AD_COMMAND = 'UPDATE_AD_GENERIC'
-DEFAULT_INVALIDATE_AD_COMMAND = 'INVALIDATE_AD_GENERIC'
+DEFAULT_INVALIDATE_AD_COMMAND = 'INVALIDATE_ADS_GENERIC'
 
 
 @six.add_metaclass(abc.ABCMeta)
