@@ -46,7 +46,7 @@ class HTCondorManifests(Publisher.Publisher):
                 ads = [{
                     'MyType': 'Query',
                     'TargetType': self.classad_type,
-                    'Requirements': constraint
+                    'Requirements': classad.exprTree(constraint)
                 }]
                 try:
                     self.logger.info('Invalidating %s classads from collector_host %s with constraint %s' % (
