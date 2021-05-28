@@ -4,9 +4,12 @@ Get allocation info from Nersc
 import pandas as pd
 import logging
 
+from prometheus_client import start_http_server, Gauge
+
 from decisionengine.framework.modules import Source
 from decisionengine.framework.modules.Source import Parameter
 from decisionengine_modules.NERSC.util import newt
+import prometheus_client
 
 _MAX_RETRIES = 10
 _RETRY_BACKOFF_FACTOR = 1
@@ -62,6 +65,7 @@ class NerscAllocationInfo(Source.Source):
                 except KeyError:
                     # Empty return from get_usage, so just move on
                     pass
+
         # filter results based on constraints specified in newt_keys dictionary
         newt_keys = self.constraints.get("newt_keys", {})
         for key, values in newt_keys.items():
@@ -74,6 +78,19 @@ class NerscAllocationInfo(Source.Source):
                 k = 'repoType'
             if values:
                 results = [x for x in results if x[k] in values]
+                """
+    [{u'uid': 72048, u'firstname': u'Steven', u'middlename': u'C',
+        u'projectId': 54807, u'currentAlloc': 374400000000.0,
+        u'userAlloc': 0.0, u'repoType': u'REPO', u'repoName': u'm2612',
+        u'lastname': u'Timm', u'userAllocPct': 2.0, u'usedAlloc': 560.0,
+        u'name': u'timm'}])
+"""
+
+            for result in results:
+                username = result['name']
+                g = prometheus_client.Gauge('user_used_allocation_percent', 'Test metric', ['username'])
+                g.set(result['userAllocPct'])
+
         return results
 
     def acquire(self):
