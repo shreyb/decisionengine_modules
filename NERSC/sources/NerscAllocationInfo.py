@@ -4,7 +4,7 @@ Get allocation info from Nersc
 import pandas as pd
 import logging
 
-from prometheus_client import start_http_server, Gauge
+from prometheus_client import Gauge
 
 from decisionengine.framework.modules import Source
 from decisionengine.framework.modules.Source import Parameter
@@ -13,6 +13,17 @@ import prometheus_client
 
 _MAX_RETRIES = 10
 _RETRY_BACKOFF_FACTOR = 1
+
+USER_USED_ALLOCATION_PCT = prometheus_client.Gauge(
+    'de_nersc_user_used_allocation_percent',
+    'Test metric',
+    ['username', 'projectid', 'reponame'],
+    multiprocess_mode='liveall')
+USER_USED_ALLOCATION = prometheus_client.Gauge(
+    'de_nersc_user_used_allocation_amount',
+    'Test metric',
+    ['username', 'projectid', 'reponame'],
+    multiprocess_mode='liveall')
 
 
 @Source.supports_config(Parameter('constraints',
@@ -27,7 +38,8 @@ _RETRY_BACKOFF_FACTOR = 1
   }
 """),
                         Parameter('max_retries', default=_MAX_RETRIES),
-                        Parameter('retry_backoff_factor', default=_RETRY_BACKOFF_FACTOR),
+                        Parameter('retry_backoff_factor',
+                                  default=_RETRY_BACKOFF_FACTOR),
                         Parameter('passwd_file', type=str, comment="Path to password file"))
 @Source.produces(Nersc_Allocation_Info=pd.DataFrame)
 class NerscAllocationInfo(Source.Source):
@@ -83,13 +95,19 @@ class NerscAllocationInfo(Source.Source):
         u'projectId': 54807, u'currentAlloc': 374400000000.0,
         u'userAlloc': 0.0, u'repoType': u'REPO', u'repoName': u'm2612',
         u'lastname': u'Timm', u'userAllocPct': 2.0, u'usedAlloc': 560.0,
-        u'name': u'timm'}])
+        u'name': u'timm'}]
 """
-
             for result in results:
-                username = result['name']
-                g = prometheus_client.Gauge('user_used_allocation_percent', 'Test metric', ['username'])
-                g.set(result['userAllocPct'])
+                try:
+                    username = result['name']
+                    projectid = result['projectId']
+                    reponame = result['repoName']
+                    USER_USED_ALLOCATION_PCT.labels(username, projectid, reponame).set(
+                        result['userAllocPct'])
+                    USER_USED_ALLOCATION.labels(username, projectid, reponame).set(
+                        result['usedAlloc'])
+                except KeyError as e:
+                    self.logger.warn(f"Missing key for metric: {e}")
 
         return results
 
