@@ -4,8 +4,21 @@ import pandas
 
 from decisionengine.framework.modules import Source
 from decisionengine.framework.modules.Source import Parameter
+from decisionengine.framework.util.metrics import Gauge
 from decisionengine_modules.util.retry_function import retry_wrapper
 from decisionengine_modules.htcondor import htcondor_query
+
+# Metrics
+ENTRY_GLIDEIN_IDLE_COUNT = Gauge("de_gwms_factory_entries_idle_total",
+                                 "Total number of idle glideins at an entry",
+                                 labels=["Collector", "EntryName"])
+ENTRY_GLIDEIN_RUNNING_COUNT = Gauge("de_gwms_factory_entries_running_total",
+                                    "Total number of running glideins at an entry",
+                                    labels=["Collector", "EntryName"])
+ENTRY_GLIDEIN_HELD_COUNT = Gauge("de_gwms_factory_entries_held_total",
+                                 "Total number of held glideins at an entry",
+                                 labels=["Collector", "EntryName"])
+
 
 @Source.supports_config(Parameter('condor_config', type=str, comment="path to condor configuration"),
                         Parameter('factories',
@@ -78,6 +91,17 @@ class FactoryEntries(Source.Source):
                             if eachDict.get(key) is None:
                                 eachDict[key] = value
 
+                for key, item in condor_status.stored_data.items():
+                    ENTRY_GLIDEIN_IDLE_COUNT.labels(
+                        collector_host, item["EntryName"]).set(
+                            item["GlideinMonitorTotalStatusIdle"])
+                    ENTRY_GLIDEIN_RUNNING_COUNT.labels(
+                        collector_host, item["EntryName"]).set(
+                            item["GlideinMonitorTotalStatusRunning"])
+                    ENTRY_GLIDEIN_HELD_COUNT.labels(
+                        collector_host, item["EntryName"]).set(
+                            item["GlideinMonitorTotalStatusHeld"])
+
                 df = pandas.DataFrame(condor_status.stored_data)
                 if not df.empty:
                     (col_host, sec_cols) = htcondor_query.split_collector_host(
@@ -91,6 +115,7 @@ class FactoryEntries(Source.Source):
 
                     dataframe = pandas.concat([dataframe, df],
                                               ignore_index=True, sort=True)
+
             except htcondor_query.QueryError as e:
                 self.logger.error('Failed to fetch glidefactory classads '
                                   'from collector host(s) "{}": {}'.format(
@@ -107,7 +132,8 @@ class FactoryEntries(Source.Source):
 
         results = {}
         for key, value in self._entry_gridtype_map.items():
-            results[key] = dataframe.loc[(dataframe.GLIDEIN_GridType.isin(list(value)))]
+            results[key] = dataframe.loc[(
+                dataframe.GLIDEIN_GridType.isin(list(value)))]
         return results
 
 
