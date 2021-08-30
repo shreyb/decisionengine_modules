@@ -14,14 +14,14 @@ import prometheus_client
 _MAX_RETRIES = 10
 _RETRY_BACKOFF_FACTOR = 1
 
-USER_USED_ALLOCATION_PCT = prometheus_client.Gauge(
-    'de_nersc_user_used_allocation_percent',
-    'Test metric',
+USER_TOTAL_ALLOCATION = prometheus_client.Gauge(
+    'de_nersc_user_allocation_total_seconds',
+    'Total allocation for a projectID and user',
     ['username', 'projectid', 'reponame'],
     multiprocess_mode='liveall')
 USER_USED_ALLOCATION = prometheus_client.Gauge(
-    'de_nersc_user_used_allocation_amount',
-    'Test metric',
+    'de_nersc_user_used_allocation_seconds',
+    'Used Allocation for a projectID and user',
     ['username', 'projectid', 'reponame'],
     multiprocess_mode='liveall')
 
@@ -102,8 +102,8 @@ class NerscAllocationInfo(Source.Source):
                     username = result['name']
                     projectid = result['projectId']
                     reponame = result['repoName']
-                    USER_USED_ALLOCATION_PCT.labels(username, projectid, reponame).set(
-                        result['userAllocPct'])
+                    USER_TOTAL_ALLOCATION.labels(username, projectid, reponame).set(
+                        result['currentAlloc'])  # TODO Is this userAlloc?
                     USER_USED_ALLOCATION.labels(username, projectid, reponame).set(
                         result['usedAlloc'])
                 except KeyError as e:
